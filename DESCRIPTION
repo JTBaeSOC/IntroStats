@@ -1,0 +1,13 @@
+Package: soc302
+Title: Practice Exam Checker for Social Statistics 302
+Version: 0.1.0
+Author: JT Bae
+Maintainer: JT Bae <jt@example.com>
+Description: Provides the check() function used in SOC 302 practice exams.
+    Students assign their calculator answer to a variable (e.g. q1 <- 3.50)
+    and call check(q1) to receive immediate correct/incorrect feedback.
+    Answers are graded by comparing values rounded to 2 decimal places,
+    matching standard calculator precision.
+License: MIT
+Encoding: UTF-8
+RoxygenNote: 7.0.0
