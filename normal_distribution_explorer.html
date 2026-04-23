@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Normal Distribution Explorer — Soc 302</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f7f6f3;
+      color: #1a1a1a;
+      padding: 36px 32px 60px;
+      min-width: 860px;
+    }
+
+    .kicker {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: #57068c; margin-bottom: 8px;
+    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 5px; }
+    .subtitle { font-size: 13.5px; color: #666; margin-bottom: 28px; line-height: 1.5; max-width: 700px; }
+    .subtitle strong { color: #333; }
+
+    /* ── Main layout ── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 24px;
+      max-width: 1000px;
+    }
+
+    /* ── Chart card ── */
+    .chart-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px 20px 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      border: 1.5px solid #ececec;
+    }
+
+    canvas#bell {
+      display: block;
+      width: 100%;
+      height: 320px;
+    }
+
+    /* ── Slider ── */
+    .slider-row {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .slider-label {
+      font-size: 12px; color: #888; text-transform: uppercase;
+      letter-spacing: 1px; white-space: nowrap;
+    }
+    input[type=range] {
+      flex: 1;
+      accent-color: #57068c;
+      height: 6px;
+      cursor: pointer;
+    }
+    .slider-val {
+      font-size: 15px; font-weight: 700; color: #57068c;
+      min-width: 52px; text-align: right;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── Stats panel ── */
+    .stats-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      border: 1.5px solid #ececec;
+    }
+    .stat-card .sc-label {
+      font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: #aaa; margin-bottom: 6px;
+    }
+    .stat-card .sc-value {
+      font-size: 28px; font-weight: 700; line-height: 1;
+      font-family: 'Courier New', monospace;
+    }
+    .stat-card .sc-detail {
+      font-size: 12px; color: #888; margin-top: 5px; line-height: 1.5;
+    }
+    .stat-card.purple .sc-value { color: #57068c; }
+    .stat-card.green  .sc-value { color: #27ae60; }
+    .stat-card.red    .sc-value { color: #c0392b; }
+
+    /* critical value badge */
+    .crit-badge {
+      display: inline-block;
+      background: #f0eef5;
+      border: 1.5px solid #c9b3e0;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      color: #57068c;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .legend-row {
+      display: flex; gap: 18px; margin-top: 14px;
+      font-size: 12px; color: #777; align-items: center;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .l-swatch { width: 20px; height: 10px; border-radius: 3px; }
+
+    /* ── Section divider ── */
+    .section-divider {
+      max-width: 1000px;
+      margin: 36px 0 24px;
+      padding-top: 36px;
+      border-top: 1.5px solid #e4e0ec;
+    }
+    .section-divider .kicker { margin-bottom: 6px; }
+    .section-divider h2 { font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+    .section-divider p { font-size: 13.5px; color: #666; line-height: 1.5; max-width: 700px; }
+    .section-divider p strong { color: #333; }
+
+    /* ── Applied chart card ── */
+    canvas#bell2 {
+      display: block;
+      width: 100%;
+      height: 300px;
+    }
+
+    /* ── Computation panel ── */
+    .comp-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #ececec;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+    .comp-given {
+      background: #f7f4fc;
+      border-bottom: 1.5px solid #e4dff0;
+      padding: 14px 18px;
+    }
+    .comp-given .cg-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: #9b7fc4; font-weight: 700; margin-bottom: 8px;
+    }
+    .comp-given .cg-row {
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .comp-given .cg-item {
+      background: white; border-radius: 6px; padding: 5px 11px;
+      font-family: 'Courier New', monospace; font-size: 13px;
+      color: #57068c; font-weight: 700;
+      border: 1px solid #d0bfec;
+    }
+
+    .comp-steps { padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+    .comp-step { display: flex; gap: 12px; align-items: flex-start; }
+    .step-num {
+      flex-shrink: 0;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #57068c; color: white;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+    .step-body { flex: 1; }
+    .step-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 3px; }
+    .step-eq {
+      font-family: 'Courier New', monospace; font-size: 13px;
+      color: #2c3e50; line-height: 1.7;
+    }
+    .step-eq .hi { color: #57068c; font-weight: 700; }
+    .step-eq .ans { color: #e67e22; font-weight: 700; }
+
+    .comp-result {
+      margin: 0 18px 16px;
+      background: #f0f9f5;
+      border: 1.5px solid #a9dbc0;
+      border-radius: 10px;
+      padding: 12px 15px;
+    }
+    .comp-result .cr-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: #27ae60; font-weight: 700; margin-bottom: 6px;
+    }
+    .comp-result .cr-ci {
+      font-family: 'Courier New', monospace; font-size: 16px;
+      font-weight: 700; color: #1a7a44; margin-bottom: 5px;
+    }
+    .comp-result .cr-note {
+      font-size: 12px; color: #555; line-height: 1.5;
+    }
+
+    .comp-interp {
+      margin: 0 18px 18px;
+      background: #fff8ec;
+      border-left: 4px solid #e67e22;
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      font-size: 12.5px; color: #555; line-height: 1.6;
+    }
+    .comp-interp strong { color: #c0392b; }
+
+    /* ── Verdict card ── */
+    .comp-verdict {
+      margin: 0 18px 14px;
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-size: 13px; line-height: 1.5;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .comp-verdict.captured {
+      background: #f0f9f5; border: 1.5px solid #a9dbc0;
+    }
+    .comp-verdict.missed {
+      background: #fef0f0; border: 1.5px solid #f0b8b8;
+    }
+    .verdict-title {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+      font-weight: 700; margin-bottom: 5px;
+    }
+    .comp-verdict.captured .verdict-title { color: #27ae60; }
+    .comp-verdict.missed   .verdict-title { color: #c0392b; }
+    .verdict-body { font-size: 12.5px; color: #444; }
+    .verdict-body strong { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div class="kicker">Soc 302 · Normal Distribution · Standard Errors &amp; Area Under the Curve</div>
+<h1>Normal Distribution Explorer</h1>
+<p class="subtitle">
+  Drag the slider to move two <strong>symmetric vertical lines</strong> away from the mean.
+  The shaded area shows what fraction of poll estimates fall inside — and the panel on the right
+  gives you the exact percentages and the R code to reproduce it.
+</p>
+
+<!-- ── Main grid ── -->
+<div class="main">
+
+  <!-- Left: chart -->
+  <div class="chart-card">
+    <canvas id="bell"></canvas>
+
+    <div class="slider-row">
+      <span class="slider-label">Distance&nbsp;from&nbsp;mean</span>
+      <input type="range" id="zSlider" min="1" max="400" value="196" step="1">
+      <span class="slider-val" id="zVal">±1.96 SD</span>
+    </div>
+
+    <div class="legend-row">
+      <div class="legend-item">
+        <div class="l-swatch" style="background:rgba(87,6,140,0.18);border:1px solid rgba(87,6,140,0.45);"></div>
+        Inside range
+      </div>
+      <div class="legend-item">
+        <div class="l-swatch" style="background:rgba(192,57,43,0.18);border:1px solid rgba(192,57,43,0.45);"></div>
+        Outside range
+      </div>
+      <div class="legend-item" style="margin-left:auto;">
+        Common thresholds:
+        <span class="crit-badge" id="badge90" style="cursor:pointer;" title="Click to set">z = 1.645</span>
+        <span class="crit-badge" id="badge95" style="cursor:pointer;" title="Click to set">z = 1.960</span>
+        <span class="crit-badge" id="badge99" style="cursor:pointer;" title="Click to set">z = 2.576</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: stats -->
+  <div class="stats-panel">
+    <div class="stat-card purple">
+      <div class="sc-label">Distance from mean</div>
+      <div class="sc-value" id="sDist">±1.96</div>
+      <div class="sc-detail" id="sDistNote">standard deviations (SDs)<br>i.e. z* = 1.96</div>
+    </div>
+    <div class="stat-card green">
+      <div class="sc-label">% inside the lines</div>
+      <div class="sc-value" id="sInside">95.00%</div>
+      <div class="sc-detail" id="sInsideNote">polls that fall within ±1.96 SD<br>of the mean by chance</div>
+    </div>
+    <div class="stat-card red">
+      <div class="sc-label">% outside the lines</div>
+      <div class="sc-value" id="sOutside">5.00%</div>
+      <div class="sc-detail" id="sOutsideNote">polls that would be<br>"statistically significant" at α = 5%</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Section 2: Applied example ── -->
+<div class="section-divider">
+  <div class="kicker">Applied Example · Abortion Attitudes · Confidence Interval</div>
+  <h2>What Does a Confidence Interval Actually Capture?</h2>
+  <p>
+    The <strong>true population mean</strong> (red line) is fixed at μ = 2.25 — in practice we never know it.
+    Each sample produces an <strong>estimate p̂</strong> (blue line). Drag the slider to move p̂ and watch the
+    95% CI shift with it. Notice: the CI either captures the true mean or it doesn't.
+    SE = 0.14, so ME = 1.96 × 0.14 = <strong>±0.274</strong>.
+  </p>
+</div>
+
+<div class="main">
+  <!-- Left: applied chart -->
+  <div class="chart-card">
+    <canvas id="bell2"></canvas>
+
+    <!-- slider track margins match PAD2.left / PAD2.right so thumb aligns with x-axis -->
+    <div style="margin-left:52px; margin-right:28px; margin-top:4px;">
+      <input type="range" id="phatSlider" min="1500" max="3000" value="2250" step="1"
+             style="width:100%; accent-color:#2980b9; cursor:pointer;">
+    </div>
+    <div class="slider-row" style="margin-top:2px; padding: 0 2px;">
+      <span class="slider-label">← drag to move sample estimate p̂ →</span>
+      <span class="slider-val" id="phatVal" style="color:#2980b9;">2.250</span>
+    </div>
+
+    <div class="legend-row" style="margin-top:10px;">
+      <div class="legend-item">
+        <div class="l-swatch" style="width:3px;height:16px;border-radius:1px;background:#c0392b;"></div>
+        True mean μ = 2.25
+      </div>
+      <div class="legend-item">
+        <div class="l-swatch" style="width:3px;height:16px;border-radius:1px;background:#2980b9;"></div>
+        Sample estimate p̂
+      </div>
+      <div class="legend-item">
+        <div class="l-swatch" style="background:rgba(39,174,96,0.22);border:1px solid rgba(39,174,96,0.6);"></div>
+        95% CI (captures μ)
+      </div>
+      <div class="legend-item">
+        <div class="l-swatch" style="background:rgba(192,57,43,0.18);border:1px solid rgba(192,57,43,0.5);"></div>
+        95% CI (misses μ)
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: computation panel -->
+  <div class="comp-panel">
+    <div class="comp-given">
+      <div class="cg-label">Fixed values</div>
+      <div class="cg-row">
+        <div class="cg-item">μ = 2.25</div>
+        <div class="cg-item">SE = 0.14</div>
+        <div class="cg-item">z* = 1.96</div>
+        <div class="cg-item">ME = 0.274</div>
+      </div>
+    </div>
+
+    <div class="comp-steps">
+      <div class="comp-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Margin of Error (ME)</div>
+          <div class="step-eq">
+            ME = <span class="hi">1.96</span> × <span class="hi">0.14</span> = <span class="ans">0.274</span>
+          </div>
+        </div>
+      </div>
+      <div class="comp-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Lower bound = p̂ − ME</div>
+          <div class="step-eq" id="stepLo">
+            <span id="phatLo">2.250</span> − 0.274 = <span class="ans" id="ciLoVal">1.976</span>
+          </div>
+        </div>
+      </div>
+      <div class="comp-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Upper bound = p̂ + ME</div>
+          <div class="step-eq" id="stepHi">
+            <span id="phatHi">2.250</span> + 0.274 = <span class="ans" id="ciHiVal">2.524</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="comp-result" id="ciResult">
+      <div class="cr-label">95% Confidence Interval</div>
+      <div class="cr-ci" id="ciRange">[ 1.976 ,  2.524 ]</div>
+      <div class="cr-note">p̂ ± 0.274 (margin of error)</div>
+    </div>
+
+    <div class="comp-verdict captured" id="compVerdict">
+      <div class="verdict-title" id="verdictTitle">✓ CI captures the true mean</div>
+      <div class="verdict-body" id="verdictBody">
+        μ = 2.25 falls inside [<strong id="vLo">1.976</strong>, <strong id="vHi">2.524</strong>].
+        This CI is one of the ~95% that would contain the true value.
+      </div>
+    </div>
+
+    <div class="comp-interp">
+      If we took 100 random samples of the same size, <strong>~95 of the resulting CIs</strong>
+      would contain the true mean. The CI varies — the true mean does not. Drag the slider to see this.
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Math helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function dnorm(x) {
+  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+}
+
+// Φ(z): standard normal CDF (Abramowitz & Stegun 26.2.17)
+function pnorm(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const poly = t * (0.319381530 + t * (-0.356563782 +
+               t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  const val = 1 - dnorm(Math.abs(z)) * poly;
+  return z >= 0 ? val : 1 - val;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Canvas setup
+// ─────────────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('bell');
+const ctx    = canvas.getContext('2d');
+
+// High-DPI support
+function resizeCanvas() {
+  const dpr  = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+}
+
+// Layout constants (in CSS px)
+const PAD = { top: 24, right: 28, bottom: 48, left: 44 };
+
+function cssW() { return canvas.getBoundingClientRect().width; }
+function cssH() { return canvas.getBoundingClientRect().height; }
+function plotW() { return cssW() - PAD.left - PAD.right; }
+function plotH() { return cssH() - PAD.top  - PAD.bottom; }
+
+// Map z-score → x pixel
+function zToPx(z) { return PAD.left + ((z + 4) / 8) * plotW(); }
+// Map density → y pixel  (scale so peak sits at ~85% of plotH)
+const YSCALE = 0.85;
+function dToPy(d, dMax) { return PAD.top + plotH() * (1 - (d / dMax) * YSCALE); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Draw
+// ─────────────────────────────────────────────────────────────────────────────
+function draw(zStar) {
+  const W = cssW(), H = cssH();
+  const pw = plotW(), ph = plotH();
+  const dMax = dnorm(0);   // peak density
+  const NZ = 500;           // points along curve
+  const zMin = -4, zMax = 4;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // --- helper: curve path from z=a to z=b ---
+  function buildPath(a, b) {
+    ctx.beginPath();
+    for (let i = 0; i <= NZ; i++) {
+      const z = a + (b - a) * i / NZ;
+      const x = zToPx(z);
+      const y = dToPy(dnorm(z), dMax);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    return;
+  }
+
+  // Baseline y
+  const baseY = dToPy(0, dMax);
+
+  // ── Fill outside (tails) ──────────────────────────────────────────────────
+  ctx.save();
+  ctx.beginPath();
+  // left tail
+  for (let i = 0; i <= NZ; i++) {
+    const z = zMin + (-zStar - zMin) * i / NZ;
+    const x = zToPx(z), y = dToPy(dnorm(z), dMax);
+    i === 0 ? ctx.moveTo(x, baseY) : (i === 1 ? ctx.lineTo(x, y) : ctx.lineTo(x, y));
+  }
+  ctx.lineTo(zToPx(-zStar), baseY);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(192,57,43,0.18)';
+  ctx.fill();
+
+  // right tail
+  ctx.beginPath();
+  ctx.moveTo(zToPx(zStar), baseY);
+  for (let i = 0; i <= NZ; i++) {
+    const z = zStar + (zMax - zStar) * i / NZ;
+    const x = zToPx(z), y = dToPy(dnorm(z), dMax);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(zToPx(zMax), baseY);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(192,57,43,0.18)';
+  ctx.fill();
+  ctx.restore();
+
+  // ── Fill inside ───────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(zToPx(-zStar), baseY);
+  for (let i = 0; i <= NZ; i++) {
+    const z = -zStar + (2 * zStar) * i / NZ;
+    const x = zToPx(z), y = dToPy(dnorm(z), dMax);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(zToPx(zStar), baseY);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(87,6,140,0.14)';
+  ctx.fill();
+  ctx.restore();
+
+  // ── Bell curve (stroke) ───────────────────────────────────────────────────
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i <= NZ; i++) {
+    const z = zMin + (zMax - zMin) * i / NZ;
+    const x = zToPx(z), y = dToPy(dnorm(z), dMax);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = '#2c3e50';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Baseline ──────────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(PAD.left, baseY);
+  ctx.lineTo(PAD.left + pw, baseY);
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Vertical lines ────────────────────────────────────────────────────────
+  [-zStar, zStar].forEach(z => {
+    const x = zToPx(z);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, PAD.top);
+    ctx.lineTo(x, baseY);
+    ctx.strokeStyle = '#c0392b';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.restore();
+
+    // label above line
+    ctx.save();
+    ctx.fillStyle = '#c0392b';
+    ctx.font = 'bold 11.5px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    const label = (z < 0 ? '−' : '+') + zStar.toFixed(2) + ' SD';
+    ctx.fillText(label, x, PAD.top - 7);
+    ctx.restore();
+  });
+
+  // ── Mean line ─────────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(zToPx(0), PAD.top);
+  ctx.lineTo(zToPx(0), baseY);
+  ctx.strokeStyle = '#57068c';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  ctx.stroke();
+  ctx.fillStyle = '#57068c';
+  ctx.font = 'bold 11.5px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('μ = 0', zToPx(0), PAD.top - 7);
+  ctx.restore();
+
+  // ── X-axis ticks ──────────────────────────────────────────────────────────
+  ctx.save();
+  ctx.fillStyle = '#888';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  [-3, -2, -1, 0, 1, 2, 3].forEach(z => {
+    const x = zToPx(z);
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.lineTo(x, baseY + 5);
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillText(z === 0 ? '0' : (z > 0 ? '+' : '') + z, x, baseY + 17);
+  });
+  ctx.fillStyle = '#aaa';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillText('z-score (standard deviations from mean)', PAD.left + pw / 2, baseY + 34);
+  ctx.restore();
+
+  // ── Inside percentage label ───────────────────────────────────────────────
+  const insidePct = (pnorm(zStar) - pnorm(-zStar)) * 100;
+  ctx.save();
+  ctx.fillStyle = '#57068c';
+  ctx.font = `bold ${zStar > 2 ? 15 : 17}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(insidePct.toFixed(2) + '%', zToPx(0), dToPy(dnorm(0) * 0.35, dMax));
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillStyle = '#999';
+  ctx.fillText('inside', zToPx(0), dToPy(dnorm(0) * 0.35, dMax) + 16);
+  ctx.restore();
+
+  // ── Tail percentage labels ────────────────────────────────────────────────
+  const tailPct = ((1 - insidePct / 100) / 2 * 100).toFixed(2);
+  ctx.save();
+  ctx.fillStyle = '#c0392b';
+  ctx.font = 'bold 12px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(tailPct + '%', zToPx(-zStar - (4 - zStar) / 2), dToPy(dnorm(0) * 0.12, dMax));
+  ctx.fillText(tailPct + '%', zToPx( zStar + (4 - zStar) / 2), dToPy(dnorm(0) * 0.12, dMax));
+  ctx.restore();
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Update stats panel
+// ─────────────────────────────────────────────────────────────────────────────
+function updateStats(z) {
+  const inside  = (pnorm(z) - pnorm(-z)) * 100;
+  const outside = 100 - inside;
+  const alpha   = outside / 100;
+
+  document.getElementById('sDist').textContent = `±${z.toFixed(2)}`;
+  document.getElementById('sDistNote').textContent =
+    `standard deviations (SDs)\ni.e. z* = ${z.toFixed(3)}`;
+
+  document.getElementById('sInside').textContent  = inside.toFixed(2) + '%';
+  document.getElementById('sInsideNote').textContent =
+    `polls that fall within ±${z.toFixed(2)} SD\nof the mean by chance`;
+
+  document.getElementById('sOutside').textContent  = outside.toFixed(2) + '%';
+  document.getElementById('sOutsideNote').textContent =
+    `would be "significant" at α = ${outside.toFixed(2)}%\n(each tail: ${(outside/2).toFixed(2)}%)`;
+
+  document.getElementById('zVal').textContent = `±${z.toFixed(2)} SD`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main update loop
+// ─────────────────────────────────────────────────────────────────────────────
+function update(z) {
+  resizeCanvas();
+  draw(z);
+  updateStats(z);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Slider wiring
+// ─────────────────────────────────────────────────────────────────────────────
+const slider = document.getElementById('zSlider');
+// slider range: 1–400 mapped to z = 0.01–4.00
+function sliderToZ(v) { return v / 100; }
+
+slider.addEventListener('input', () => update(sliderToZ(parseInt(slider.value))));
+
+// Quick-set badges
+document.getElementById('badge90').addEventListener('click', () => {
+  slider.value = 165; update(1.645);
+});
+document.getElementById('badge95').addEventListener('click', () => {
+  slider.value = 196; update(1.960);
+});
+document.getElementById('badge99').addEventListener('click', () => {
+  slider.value = 258; update(2.576);
+});
+
+// Redraw on resize
+window.addEventListener('resize', () => update(sliderToZ(parseInt(slider.value))));
+
+// Initial draw
+update(1.96);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 2: Moveable sampling distribution — fixed true mean, moveable p̂
+// ─────────────────────────────────────────────────────────────────────────────
+const MU_TRUE = 2.25;   // true population mean — fixed red line
+const SE2     = 0.14;   // standard error
+const ZCI     = 1.96;
+const ME2     = ZCI * SE2;   // 0.2744
+
+// X-axis display range = slider range: slider min=1500, max=3000 → p̂ = v/1000
+const X2_LO = 1.50;
+const X2_HI = 3.00;
+
+// slider value / 1000 = p̂ directly (min=1500→1.50, max=3000→3.00)
+function sliderToPhat(v) { return v / 1000; }
+
+const canvas2 = document.getElementById('bell2');
+const ctx2    = canvas2.getContext('2d');
+const PAD2    = { top: 34, right: 28, bottom: 52, left: 52 };
+
+function resizeCanvas2() {
+  const dpr  = window.devicePixelRatio || 1;
+  const rect = canvas2.getBoundingClientRect();
+  canvas2.width  = rect.width  * dpr;
+  canvas2.height = rect.height * dpr;
+  ctx2.scale(dpr, dpr);
+}
+function cssW2()  { return canvas2.getBoundingClientRect().width; }
+function cssH2()  { return canvas2.getBoundingClientRect().height; }
+function plotW2() { return cssW2() - PAD2.left - PAD2.right; }
+function plotH2() { return cssH2() - PAD2.top  - PAD2.bottom; }
+
+function valToPx2(v) {
+  return PAD2.left + ((v - X2_LO) / (X2_HI - X2_LO)) * plotW2();
+}
+
+// Density of N(phat, SE2²) evaluated at x
+function dnorm2(x, phat) {
+  const z = (x - phat) / SE2;
+  return Math.exp(-0.5 * z * z) / (SE2 * Math.sqrt(2 * Math.PI));
+}
+
+const YSCALE2 = 0.80;
+function dToPy2(d, dMax) { return PAD2.top + plotH2() * (1 - (d / dMax) * YSCALE2); }
+
+function drawApplied(phat) {
+  const pw  = plotW2();
+  const dMax = 1 / (SE2 * Math.sqrt(2 * Math.PI));  // peak density (at center)
+  const NZ  = 600;
+  const baseY = dToPy2(0, dMax);
+  const ciLo  = phat - ME2;
+  const ciHi  = phat + ME2;
+  const captured = (ciLo <= MU_TRUE && MU_TRUE <= ciHi);
+  const fillIn  = captured ? 'rgba(39,174,96,0.18)'  : 'rgba(192,57,43,0.14)';
+  const strokeIn = captured ? 'rgba(39,174,96,0.75)' : 'rgba(192,57,43,0.6)';
+
+  ctx2.clearRect(0, 0, cssW2(), cssH2());
+
+  // ── CI shaded fill (full area under curve between ciLo and ciHi) ──────────
+  ctx2.save();
+  ctx2.beginPath();
+  const loClamp = Math.max(ciLo, X2_LO);
+  const hiClamp = Math.min(ciHi, X2_HI);
+  ctx2.moveTo(valToPx2(loClamp), baseY);
+  for (let i = 0; i <= NZ; i++) {
+    const x = loClamp + (hiClamp - loClamp) * i / NZ;
+    ctx2.lineTo(valToPx2(x), dToPy2(dnorm2(x, phat), dMax));
+  }
+  ctx2.lineTo(valToPx2(hiClamp), baseY);
+  ctx2.closePath();
+  ctx2.fillStyle = fillIn;
+  ctx2.fill();
+  ctx2.restore();
+
+  // ── Bell curve ────────────────────────────────────────────────────────────
+  ctx2.save();
+  ctx2.beginPath();
+  for (let i = 0; i <= NZ; i++) {
+    const x  = X2_LO + (X2_HI - X2_LO) * i / NZ;
+    const px = valToPx2(x), py = dToPy2(dnorm2(x, phat), dMax);
+    i === 0 ? ctx2.moveTo(px, py) : ctx2.lineTo(px, py);
+  }
+  ctx2.strokeStyle = '#2c3e50';
+  ctx2.lineWidth = 2.5;
+  ctx2.stroke();
+  ctx2.restore();
+
+  // ── Baseline ──────────────────────────────────────────────────────────────
+  ctx2.save();
+  ctx2.beginPath();
+  ctx2.moveTo(PAD2.left, baseY);
+  ctx2.lineTo(PAD2.left + pw, baseY);
+  ctx2.strokeStyle = '#ccc';
+  ctx2.lineWidth = 1;
+  ctx2.stroke();
+  ctx2.restore();
+
+  // ── CI boundary dashed lines (values shown in panel — no text labels here) ─
+  [ciLo, ciHi].forEach(v => {
+    if (v < X2_LO || v > X2_HI) return;
+    const px = valToPx2(v);
+    ctx2.save();
+    ctx2.beginPath();
+    ctx2.moveTo(px, PAD2.top);
+    ctx2.lineTo(px, baseY);
+    ctx2.strokeStyle = captured ? '#27ae60' : '#c0392b';
+    ctx2.lineWidth = 1.8;
+    ctx2.setLineDash([5, 4]);
+    ctx2.stroke();
+    ctx2.restore();
+  });
+
+  // ── ME arrow (p̂ center → upper CI bound) ─────────────────────────────────
+  const phatPx = valToPx2(phat);
+  const ciHiPx = valToPx2(Math.min(ciHi, X2_HI));
+  const arrowY = baseY - 22;
+  ctx2.save();
+  ctx2.strokeStyle = '#e67e22';
+  ctx2.fillStyle   = '#e67e22';
+  ctx2.lineWidth   = 1.5;
+  ctx2.setLineDash([]);
+  ctx2.beginPath();
+  ctx2.moveTo(phatPx, arrowY);
+  ctx2.lineTo(ciHiPx, arrowY);
+  ctx2.stroke();
+  [[phatPx, -1], [ciHiPx, 1]].forEach(([x, d]) => {
+    ctx2.beginPath();
+    ctx2.moveTo(x, arrowY);
+    ctx2.lineTo(x - d * 6, arrowY - 4);
+    ctx2.lineTo(x - d * 6, arrowY + 4);
+    ctx2.closePath();
+    ctx2.fill();
+  });
+  ctx2.font = 'bold 10.5px -apple-system, sans-serif';
+  ctx2.textAlign = 'center';
+  ctx2.fillText('ME = ±0.274', (phatPx + ciHiPx) / 2, arrowY - 5);
+  ctx2.restore();
+
+  // ── True mean line (RED — fixed) ──────────────────────────────────────────
+  const muPx = valToPx2(MU_TRUE);
+  ctx2.save();
+  ctx2.beginPath();
+  ctx2.moveTo(muPx, PAD2.top);
+  ctx2.lineTo(muPx, baseY);
+  ctx2.strokeStyle = '#c0392b';
+  ctx2.lineWidth = 2.5;
+  ctx2.setLineDash([]);
+  ctx2.stroke();
+  ctx2.restore();
+
+  // ── Sample estimate line (BLUE — moves with slider) ───────────────────────
+  ctx2.save();
+  ctx2.beginPath();
+  ctx2.moveTo(phatPx, PAD2.top);
+  ctx2.lineTo(phatPx, baseY);
+  ctx2.strokeStyle = '#2980b9';
+  ctx2.lineWidth = 2.5;
+  ctx2.setLineDash([]);
+  ctx2.stroke();
+  ctx2.restore();
+
+  // ── Top labels: stagger p̂ upward if lines are close to avoid overlap ──────
+  const tooClose    = Math.abs(phatPx - muPx) < 58;
+  const muLabelY    = PAD2.top - 7;
+  const phatLabelY  = tooClose ? PAD2.top - 20 : PAD2.top - 7;
+  ctx2.save();
+  ctx2.font = 'bold 11px -apple-system, sans-serif';
+  // μ label (always centered on its line)
+  ctx2.fillStyle = '#c0392b';
+  ctx2.textAlign = 'center';
+  ctx2.fillText('μ = 2.25', muPx, muLabelY);
+  // p̂ label (text aligns away from μ so they don't collide)
+  ctx2.fillStyle = '#2980b9';
+  ctx2.textAlign = phat >= MU_TRUE ? 'left' : 'right';
+  ctx2.fillText('p̂ = ' + phat.toFixed(3),
+    phat >= MU_TRUE ? phatPx + 4 : phatPx - 4, phatLabelY);
+  // if staggered, draw a small connector tick so students can trace the line
+  if (tooClose) {
+    ctx2.strokeStyle = '#2980b9';
+    ctx2.lineWidth = 1;
+    ctx2.setLineDash([2, 2]);
+    ctx2.beginPath();
+    ctx2.moveTo(phatPx, PAD2.top - 16);
+    ctx2.lineTo(phatPx, PAD2.top);
+    ctx2.stroke();
+  }
+  ctx2.restore();
+
+  // ── X-axis ticks: evenly spaced every 0.25 ───────────────────────────────
+  ctx2.save();
+  ctx2.fillStyle = '#888';
+  ctx2.font      = '11px -apple-system, sans-serif';
+  ctx2.textAlign = 'center';
+  [1.50, 1.75, 2.00, 2.25, 2.50, 2.75, 3.00].forEach(v => {
+    const px = valToPx2(v);
+    ctx2.beginPath();
+    ctx2.moveTo(px, baseY); ctx2.lineTo(px, baseY + 5);
+    ctx2.strokeStyle = '#ccc'; ctx2.lineWidth = 1; ctx2.stroke();
+    ctx2.fillStyle = '#888';
+    ctx2.fillText(v.toFixed(2), px, baseY + 17);
+  });
+  ctx2.fillStyle = '#aaa';
+  ctx2.font = '11px -apple-system, sans-serif';
+  ctx2.fillText('Abortion attitude score — sample mean estimates (0–4 scale)',
+    PAD2.left + pw / 2, baseY + 36);
+  ctx2.restore();
+}
+
+// ── Update panel ──────────────────────────────────────────────────────────────
+function updatePanel2(phat) {
+  const ciLo     = phat - ME2;
+  const ciHi     = phat + ME2;
+  const captured = ciLo <= MU_TRUE && MU_TRUE <= ciHi;
+
+  document.getElementById('phatVal').textContent = phat.toFixed(3);
+  document.getElementById('phatLo').textContent  = phat.toFixed(3);
+  document.getElementById('phatHi').textContent  = phat.toFixed(3);
+  document.getElementById('ciLoVal').textContent = ciLo.toFixed(3);
+  document.getElementById('ciHiVal').textContent = ciHi.toFixed(3);
+  document.getElementById('ciRange').textContent =
+    '[ ' + ciLo.toFixed(3) + ' ,  ' + ciHi.toFixed(3) + ' ]';
+
+  const verdict = document.getElementById('compVerdict');
+  verdict.className = 'comp-verdict ' + (captured ? 'captured' : 'missed');
+  document.getElementById('verdictTitle').textContent =
+    captured ? '✓ CI captures the true mean' : '✗ CI misses the true mean';
+  document.getElementById('verdictBody').innerHTML =
+    captured
+      ? `μ = 2.25 falls inside [<strong>${ciLo.toFixed(3)}</strong>, <strong>${ciHi.toFixed(3)}</strong>]. This CI is one of the ~95% that would contain the true value.`
+      : `μ = 2.25 falls <em>outside</em> [<strong>${ciLo.toFixed(3)}</strong>, <strong>${ciHi.toFixed(3)}</strong>]. This CI is one of the ~5% that miss — even with a valid method.`;
+}
+
+function updateApplied(phat) {
+  resizeCanvas2();
+  drawApplied(phat);
+  updatePanel2(phat);
+}
+
+// Slider wiring
+const phatSlider = document.getElementById('phatSlider');
+phatSlider.addEventListener('input', () => {
+  updateApplied(sliderToPhat(parseInt(phatSlider.value)));
+});
+
+window.addEventListener('resize', () => {
+  update(sliderToZ(parseInt(slider.value)));
+  updateApplied(sliderToPhat(parseInt(phatSlider.value)));
+});
+
+// Initial draw — slider at 2250 → p̂ = 2.25 = MU_TRUE
+updateApplied(MU_TRUE);
+</script>
+</body>
+</html>
