@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Practice Exam 3 — Soc 302</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #edecea; color: #1a1a1a;
+      padding: 28px 20px 60px;
+    }
+
+    /* ── Exam wrapper ── */
+    .exam { max-width: 860px; margin: 0 auto; }
+
+    /* ── Exam header ── */
+    .exam-header {
+      background: white; border: 2px solid #1a1a1a; padding: 18px 22px;
+      margin-bottom: 22px;
+    }
+    .exam-header-top {
+      display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;
+    }
+    .course-info { font-size: 13px; color: #444; line-height: 1.7; }
+    .course-info strong { color: #1a1a1a; font-size: 15px; display: block; margin-bottom: 2px; }
+    .exam-title {
+      font-size: 18px; font-weight: 700; text-align: center; border-top: 1.5px solid #ccc;
+      border-bottom: 1.5px solid #ccc; padding: 8px 0; margin-bottom: 12px;
+    }
+    .name-line {
+      display: flex; gap: 30px; font-size: 13px; color: #444;
+    }
+    .name-line span { display: flex; align-items: baseline; gap: 8px; }
+    .blank-line { border-bottom: 1px solid #555; flex: 1; min-width: 120px; }
+    .exam-note { font-size: 11.5px; color: #888; margin-top: 10px; line-height: 1.5; }
+
+    /* ── Question cards ── */
+    .q-card {
+      background: white; border: 1px solid #ddd; border-radius: 3px;
+      padding: 22px 24px; margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .q-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 10px; border-bottom: 1.5px solid #e8e8e8; padding-bottom: 8px;
+    }
+    .q-num { font-size: 15px; font-weight: 700; color: #57068c; }
+    .q-pts { font-size: 11.5px; color: #999; }
+
+    .scenario {
+      background: #f7f6f3; border-left: 3px solid #57068c;
+      padding: 10px 14px; margin-bottom: 16px; font-size: 13.5px;
+      line-height: 1.65; border-radius: 0 4px 4px 0;
+    }
+    .scenario strong { color: #57068c; }
+
+    /* Sub-questions */
+    .sub-q { margin: 14px 0 0; }
+    .sub-label { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+    .sub-label .part { color: #57068c; font-weight: 700; }
+
+    /* Work box */
+    .work-box {
+      background: #fafafa; border: 1px dashed #ccc; border-radius: 4px;
+      padding: 12px 14px; min-height: 52px; margin: 6px 0 8px;
+      font-size: 13px; color: #bbb; font-style: italic;
+    }
+
+    /* Reveal mechanism */
+    .reveal-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+    .reveal-btn {
+      flex-shrink: 0; background: white; border: 1.5px solid #57068c; color: #57068c;
+      padding: 5px 13px; border-radius: 20px; cursor: pointer;
+      font-size: 11.5px; font-weight: 700; letter-spacing: 0.2px;
+      transition: all 0.15s;
+    }
+    .reveal-btn:hover { background: #57068c; color: white; }
+
+    .answer-box {
+      display: none; background: #f0f9f5; border: 1.5px solid #27ae60;
+      border-radius: 6px; padding: 11px 14px; margin-top: 8px;
+    }
+    .answer-box .ans-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.2px; color: #27ae60; font-weight: 700; margin-bottom: 4px; }
+    .answer-box .ans-body { font-size: 13px; line-height: 1.75; font-family: 'Courier New', monospace; }
+    .ans-hl { color: #57068c; font-weight: 700; font-size: 14px; }
+
+    /* Section divider within a question */
+    .sub-divider { border: none; border-top: 1px solid #f0f0f0; margin: 16px 0; }
+
+    /* ── Q3: canvas ── */
+    canvas { display: block; }
+    #q3canvas { width: 100%; height: 200px; }
+    .canvas-wrap { border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden; margin: 12px 0; }
+    .canvas-caption { font-size: 11.5px; color: #888; text-align: center; margin-top: 6px; font-style: italic; }
+
+    /* ── Q4: bell curves ── */
+    #q4canvas { width: 100%; height: 230px; }
+
+    /* ── Q5: regression table ── */
+    .reg-header {
+      font-size: 12px; color: #666; margin-bottom: 10px; line-height: 1.6;
+    }
+    .reg-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+    .reg-table th {
+      text-align: left; padding: 7px 10px; border-bottom: 2px solid #1a1a1a;
+      font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #555;
+    }
+    .reg-table th:not(:first-child) { text-align: center; }
+    .reg-table td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    .reg-table td:not(:first-child) { text-align: center; font-family: 'Courier New', monospace; }
+    .reg-table tr.sig td { background: #fefef0; }
+    .sig-star { color: #c0392b; font-weight: 700; }
+    .reg-footer { font-size: 11.5px; color: #888; margin-top: 6px; }
+
+    /* ── Q6: decision table ── */
+    .q6-instruction {
+      font-size: 13px; margin-bottom: 14px; line-height: 1.6;
+    }
+    .q6-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .q6-table th {
+      padding: 8px 12px; border-bottom: 2px solid #1a1a1a; text-align: left;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555;
+    }
+    .q6-table th.center { text-align: center; }
+    .q6-table td { padding: 11px 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    .q6-table td.center { text-align: center; }
+    .q6-table .row-label { font-weight: 700; color: #57068c; font-size: 15px; width: 28px; }
+    .q6-table .stat { font-family: 'Courier New', monospace; font-size: 14px; }
+    .q6-table .n-val { text-align: center; font-family: 'Courier New', monospace; }
+    .decision-cell { display: flex; gap: 16px; align-items: center; justify-content: center; }
+    .d-opt {
+      padding: 4px 12px; border: 2px solid transparent; border-radius: 20px;
+      cursor: pointer; font-weight: 700; font-size: 13px;
+      transition: all 0.15s; user-select: none;
+    }
+    .d-opt.reject    { color: #c0392b; }
+    .d-opt.failreject { color: #27ae60; }
+    .d-opt.selected.reject    { border-color: #c0392b; background: #fef0f0; }
+    .d-opt.selected.failreject { border-color: #27ae60; background: #f0f9f5; }
+    .d-opt.correct   { background: #e8f8ef !important; border-color: #27ae60 !important; color: #27ae60 !important; }
+    .d-opt.incorrect { background: #fef0f0 !important; border-color: #c0392b !important; color: #c0392b !important; text-decoration: line-through; }
+    .d-opt.show-correct { background: #e8f8ef; border-color: #27ae60; color: #27ae60; }
+    .q6-check-btn {
+      margin-top: 14px; padding: 9px 22px; border-radius: 8px;
+      background: #57068c; color: white; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: background 0.15s;
+    }
+    .q6-check-btn:hover { background: #6d08ad; }
+    .q6-score { margin-top: 10px; font-size: 13px; color: #555; display: none; }
+    .q6-score strong { color: #57068c; }
+    .q6-note { font-size: 11.5px; color: #888; margin-top: 8px; font-style: italic; }
+
+    /* ── Multi-part answer boxes for Q4, Q5 ── */
+    .multi-ans { margin-top: 10px; }
+    .ans-part { margin-top: 8px; }
+    .ans-part-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 3px; }
+    .big-verdict {
+      font-size: 20px; font-weight: 700; padding: 8px 16px; border-radius: 6px;
+      display: inline-block; margin-bottom: 6px;
+    }
+    .big-verdict.yes { background: #fef0f0; color: #c0392b; border: 1.5px solid #f0b8b8; }
+    .big-verdict.no  { background: #f0f9f5; color: #27ae60; border: 1.5px solid #a9dbc0; }
+
+    /* Separator */
+    .page-break-hint { text-align: center; font-size: 11px; color: #ccc; margin: 8px 0; letter-spacing: 2px; }
+    .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #bbb; }
+  </style>
+</head>
+<body>
+<div class="exam">
+
+  <!-- ══ Header ══════════════════════════════════════════════════════════ -->
+  <div class="exam-header">
+    <div class="exam-header-top">
+      <div class="course-info">
+        <strong>Soc 302: Statistics for Social Research</strong>
+        New York University · Department of Sociology
+      </div>
+      <div style="font-size:13px; color:#666; text-align:right;">
+        Total: 34 points<br>
+        α = 0.05 throughout
+      </div>
+    </div>
+    <div class="exam-title">Practice Exam 3</div>
+    <div class="name-line">
+      <span>Name: <span class="blank-line"></span></span>
+      <span>NYU ID: <span class="blank-line" style="min-width:90px;"></span></span>
+      <span>Section: <span class="blank-line" style="min-width:60px;"></span></span>
+    </div>
+    <div class="exam-note">
+      Show all work for full credit. Round to three decimal places unless otherwise noted.
+      Click <em>"Show Answer"</em> to check your responses.
+    </div>
+  </div>
+
+  <!-- ══ Q1 ══════════════════════════════════════════════════════════════ -->
+  <div class="q-card">
+    <div class="q-header">
+      <div class="q-num">Question 1</div>
+      <div class="q-pts">[6 points · 2 pts each]</div>
+    </div>
+    <div class="scenario">
+      A sociologist studies social media use among American college students.
+      A random sample of <strong>n = 1,600</strong> students reports spending an average of
+      <strong>x̄ = 25 hours per week</strong> on social media, with a sample standard deviation of
+      <strong>s = 5 hours</strong>. Answer the following questions about the sampling distribution of this estimate.
+    </div>
+
+    <!-- 1a -->
+    <div class="sub-q">
+      <div class="sub-label"><span class="part">a.</span> Compute the Standard Error (SE) of the sample mean.</div>
+      <div class="work-box">Work space…</div>
+      <div class="reveal-row">
+        <button class="reveal-btn" onclick="show('a1a')">Show Answer</button>
+      </div>
+      <div class="answer-box" id="a1a">
+        <div class="ans-label">Answer</div>
+        <div class="ans-body">
+          SE = s / √n = 5 / √1,600 = 5 / 40 = <span class="ans-hl">0.125 hours</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sub-divider">
+
+    <!-- 1b -->
+    <div class="sub-q">
+      <div class="sub-label"><span class="part">b.</span> Compute the 95% Margin of Error (ME).</div>
+      <div class="work-box">Work space…</div>
+      <div class="reveal-row">
+        <button class="reveal-btn" onclick="show('a1b')">Show Answer</button>
+      </div>
+      <div class="answer-box" id="a1b">
+        <div class="ans-label">Answer</div>
+        <div class="ans-body">
+          ME = 1.96 × SE = 1.96 × 0.125 = <span class="ans-hl">0.245 hours</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sub-divider">
+
+    <!-- 1c -->
+    <div class="sub-q">
+      <div class="sub-label"><span class="part">c.</span> Construct the 95% Confidence Interval (CI) for the population mean.</div>
+      <div class="work-box">Work space…</div>
+      <div class="reveal-row">
+        <button class="reveal-btn" onclick="show('a1c')">Show Answer</button>
+      </div>
+      <div class="answer-box" id="a1c">
+        <div class="ans-label">Answer</div>
+        <div class="ans-body">
+          95% CI = x̄ ± ME = 25 ± 0.245<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="ans-hl">[24.755,  25.245] hours</span><br>
+          <span style="font-size:11.5px; color:#666; font-style:italic; font-family:sans-serif;">
+          We are 95% confident the true mean weekly social media hours among all U.S. college students falls between 24.755 and 25.245 hours.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Q2 ══════════════════════════════════════════════════════════════ -->
+  <div class="q-card">
+    <div class="q-header">
+      <div class="q-num">Question 2</div>
+      <div class="q-pts">[6 points · 2 pts each]</div>
+    </div>
+    <div class="scenario">
+      In the same survey of <strong>n = 1,600</strong> college students, participants were asked
+      whether they use TikTok every day. Exactly <strong>p̂ = 0.40</strong> (40%) said yes.
+      Answer the following questions about the sampling distribution of this proportion.
+    </div>
+
+    <!-- 2a -->
+    <div class="sub-q">
+      <div class="sub-label"><span class="part">a.</span> Compute the Standard Error (SE) of the sample proportion.</div>
+      <div class="work-box">Work space…</div>
+      <div class="reveal-row">
+        <button class="reveal-btn" onclick="show('a2a')">Show Answer</button>
+      </div>
+      <div class="answer-box" id="a2a">
+        <div class="ans-label">Answer</div>
+        <div class="ans-body">
+          SE = √( p̂(1 − p̂) / n ) = √( 0.40 × 0.60 / 1,600 )<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;= √( 0.24 / 1,600 ) = √0.00015 = <span class="ans-hl">0.012 (≈ 0.0122)</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sub-divider">
+
+    <!-- 2b -->
+    <div class="sub-q">
+      <div class="sub-label"><span class="part">b.</span> Compute the 95% Margin of Error (ME).</div>
+      <div class="work-box">Work space…</div>
+      <div class="reveal-row">
+        <button class="reveal-btn" onclick="show('a2b')">Show Answer</button>
+      </div>
+      <div class="answer-box" id="a2b">
+        <div class="ans-label">Answer</div>
+        <div class="ans-body">
+          ME = 1.96 × SE = 1.96 × 0.0122 = <span class="ans-hl">0.024 (≈ 0.0239)</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sub-divider">
+
+    <!-- 2c -->
+    <div class="sub-q">
+      <div class="sub-label"><span class="part">c.</span> Construct the 95% Confidence Interval (CI) for the true population proportion.</div>
+      <div class="work-box">Work space…</div>
+      <div class="reveal-row">
+        <button class="reveal-btn" onclick="show('a2c')">Show Answer</button>
+      </div>
+      <div class="answer-box" id="a2c">
+        <div class="ans-label">Answer</div>
+        <div class="ans-body">
+          95% CI = p̂ ± ME = 0.40 ± 0.024<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="ans-hl">[0.376,  0.424]</span><br>
+          <span style="font-size:11.5px; color:#666; font-style:italic; font-family:sans-serif;">
+          We are 95% confident that between 37.6% and 42.4% of all U.S. college students use TikTok daily.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Q3 ══════════════════════════════════════════════════════════════ -->
+  <div class="q-card">
+    <div class="q-header">
+      <div class="q-num">Question 3</div>
+      <div class="q-pts">[4 points]</div>
+    </div>
+    <p style="font-size:13.5px; line-height:1.65; margin-bottom:12px;">
+      The figure below shows a <strong>standard normal distribution</strong> representing the sampling distribution
+      of a sample mean under H₀. The horizontal axis shows z-scores.
+      <strong>Mark (or describe) the range of z-scores that defines the 95% confidence interval</strong> — that is,
+      the region capturing 95% of all possible sample means.
+    </p>
+
+    <div class="canvas-wrap">
+      <canvas id="q3canvas"></canvas>
+    </div>
+    <div class="canvas-caption">Standard normal distribution · z-scores on horizontal axis</div>
+
+    <div class="work-box" style="margin-top:12px;">
+      The 95% CI boundaries are located at z = ________ and z = ________
+    </div>
+    <div class="reveal-row" style="margin-top:8px;">
+      <button class="reveal-btn" onclick="revealQ3()">Reveal 95% CI</button>
+    </div>
+    <div class="answer-box" id="a3">
+      <div class="ans-label">Answer</div>
+      <div class="ans-body">
+        The 95% CI spans from z = <span class="ans-hl">−1.96</span> to z = <span class="ans-hl">+1.96</span> (shaded above).<br>
+        <span style="font-size:11.5px; color:#666; font-style:italic; font-family:sans-serif;">
+        95% of all sample means fall within ±1.96 standard errors of the true population mean.
+        The remaining 5% (2.5% in each tail) falls outside these boundaries.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Q4 ══════════════════════════════════════════════════════════════ -->
+  <div class="q-card">
+    <div class="q-header">
+      <div class="q-num">Question 4</div>
+      <div class="q-pts">[6 points · 2 pts each]</div>
+    </div>
+    <p style="font-size:13.5px; line-height:1.65; margin-bottom:12px;">
+      A researcher compares political attitudes (scale: 0 = very conservative, 4 = very liberal)
+      between urban and rural residents. The figure below shows the
+      <strong>sampling distributions</strong> of the two group means
+      (blue = Urban, n = 200; red = Rural, n = 200; assumed σ = 1.0).
+    </p>
+
+    <div class="canvas-wrap">
+      <canvas id="q4canvas"></canvas>
+    </div>
+    <div class="canvas-caption">Sampling distributions of mean political attitude for Urban vs. Rural residents</div>
+
+    <div style="margin-top:16px;">
+
+      <!-- Q4.1 -->
+      <div class="sub-q">
+        <div class="sub-label"><span class="part">Q4.1</span>&nbsp; Based on the figure, are the political attitudes of urban and rural residents statistically different from each other?</div>
+        <div class="work-box">Your answer…</div>
+        <div class="reveal-row">
+          <button class="reveal-btn" onclick="show('a41')">Show Answer</button>
+        </div>
+        <div class="answer-box" id="a41">
+          <div class="ans-label">Answer</div>
+          <div class="ans-body">
+            <div class="big-verdict yes">YES — statistically different</div><br>
+            <span style="font-family:sans-serif; font-size:12.5px; color:#444;">
+            The two sampling distributions <strong>do not overlap</strong>. This means the observed difference between group means is too large to plausibly be due to sampling variation alone.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="sub-divider">
+
+      <!-- Q4.2 -->
+      <div class="sub-q">
+        <div class="sub-label"><span class="part">Q4.2</span>&nbsp; Would you reject the null hypothesis H₀: μ<sub>urban</sub> = μ<sub>rural</sub> at α = 0.05?</div>
+        <div class="work-box">Your answer…</div>
+        <div class="reveal-row">
+          <button class="reveal-btn" onclick="show('a42')">Show Answer</button>
+        </div>
+        <div class="answer-box" id="a42">
+          <div class="ans-label">Answer</div>
+          <div class="ans-body">
+            <div class="big-verdict yes">YES — Reject H₀</div><br>
+            <span style="font-family:sans-serif; font-size:12.5px; color:#444;">
+            Because the two curves do not overlap, the z-score for the difference will be far beyond ±1.96, and p &lt; 0.05.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="sub-divider">
+
+      <!-- Q4.3 -->
+      <div class="sub-q">
+        <div class="sub-label"><span class="part">Q4.3</span>&nbsp; Is the 95% confidence interval for the <em>difference</em> (μ<sub>urban</sub> − μ<sub>rural</sub>) likely to contain zero?</div>
+        <div class="work-box">Your answer…</div>
+        <div class="reveal-row">
+          <button class="reveal-btn" onclick="show('a43')">Show Answer</button>
+        </div>
+        <div class="answer-box" id="a43">
+          <div class="ans-label">Answer</div>
+          <div class="ans-body">
+            <div class="big-verdict no">NO — CI does not contain zero</div><br>
+            <span style="font-family:sans-serif; font-size:12.5px; color:#444;">
+            When the result is statistically significant (H₀ rejected), the 95% CI for the difference is entirely above or below zero — it does not capture zero. Containing zero would mean "no difference is plausible," which contradicts significance.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Q5 ══════════════════════════════════════════════════════════════ -->
+  <div class="q-card">
+    <div class="q-header">
+      <div class="q-num">Question 5</div>
+      <div class="q-pts">[4 points · 2 pts each]</div>
+    </div>
+    <p style="font-size:13.5px; line-height:1.65; margin-bottom:12px;">
+      A researcher regresses <strong>support for universal healthcare</strong> (0–4 scale) on two predictors
+      using OLS regression. The output is shown below.
+    </p>
+
+    <div class="reg-header">
+      Dependent variable: Healthcare support score (0–4) &nbsp;·&nbsp; N = 1,600 &nbsp;·&nbsp; R² = 0.14
+    </div>
+    <table class="reg-table">
+      <thead>
+        <tr>
+          <th>Predictor</th>
+          <th>Coeff. (β)</th>
+          <th>SE</th>
+          <th>z-score</th>
+          <th>p-value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sig">
+          <td>College degree <span style="font-size:11px; color:#888;">(1 = yes, 0 = no)</span></td>
+          <td>+0.52</td>
+          <td>0.09</td>
+          <td>5.78</td>
+          <td><span class="sig-star">&lt; 0.001</span></td>
+        </tr>
+        <tr>
+          <td>Age <span style="font-size:11px; color:#888;">(years)</span></td>
+          <td>+0.01</td>
+          <td>0.02</td>
+          <td>0.50</td>
+          <td>0.617</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="reg-footer">Note: H₀ for each predictor is β = 0 (no effect). Two-sided test, α = 0.05.</div>
+
+    <div style="margin-top:16px;">
+
+      <!-- Q5.1 -->
+      <div class="sub-q">
+        <div class="sub-label"><span class="part">Q5.1</span>&nbsp; Do you reject H₀ for <em>college degree</em>? Briefly justify.</div>
+        <div class="work-box">Your answer…</div>
+        <div class="reveal-row">
+          <button class="reveal-btn" onclick="show('a51')">Show Answer</button>
+        </div>
+        <div class="answer-box" id="a51">
+          <div class="ans-label">Answer</div>
+          <div class="ans-body">
+            <div class="big-verdict yes">YES — Reject H₀</div><br>
+            <span style="font-family:sans-serif; font-size:12.5px; color:#444;">
+            p &lt; 0.001 &lt; 0.05 (α). The z-score = 5.78 is well beyond ±1.96.
+            Having a college degree is significantly associated with higher healthcare support (β = +0.52).
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="sub-divider">
+
+      <!-- Q5.2 -->
+      <div class="sub-q">
+        <div class="sub-label"><span class="part">Q5.2</span>&nbsp; Do you reject H₀ for <em>age</em>? Briefly justify.</div>
+        <div class="work-box">Your answer…</div>
+        <div class="reveal-row">
+          <button class="reveal-btn" onclick="show('a52')">Show Answer</button>
+        </div>
+        <div class="answer-box" id="a52">
+          <div class="ans-label">Answer</div>
+          <div class="ans-body">
+            <div class="big-verdict no">NO — Fail to Reject H₀</div><br>
+            <span style="font-family:sans-serif; font-size:12.5px; color:#444;">
+            p = 0.617 &gt; 0.05. The z-score = 0.50 is nowhere near ±1.96.
+            Age is <em>not</em> significantly associated with healthcare support in this model.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Q6 ══════════════════════════════════════════════════════════════ -->
+  <div class="q-card">
+    <div class="q-header">
+      <div class="q-num">Question 6</div>
+      <div class="q-pts">[8 points · 2 pts each]</div>
+    </div>
+    <div class="q6-instruction">
+      For each test statistic (z or t) below, indicate whether you would
+      <strong style="color:#c0392b;">REJECT</strong> or <strong style="color:#27ae60;">FAIL-TO-REJECT</strong>
+      H₀ in a <strong>two-tailed test</strong> with α = .05 by <strong>clicking the right answer</strong>.
+      Then click <em>"Check My Answers"</em>.
+    </div>
+
+    <table class="q6-table">
+      <thead>
+        <tr>
+          <th style="width:28px;"></th>
+          <th>Test statistic</th>
+          <th class="center">N</th>
+          <th class="center" style="width:280px;">Decision</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">A.</td>
+          <td class="stat">z = −2.58</td>
+          <td class="n-val">300</td>
+          <td class="center">
+            <div class="decision-cell">
+              <span class="d-opt reject" id="q6A-r" onclick="pick('A','r')">REJECT</span>
+              <span class="d-opt failreject" id="q6A-f" onclick="pick('A','f')">FAIL-TO-REJECT</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="row-label">B.</td>
+          <td class="stat">t = &nbsp;1.75</td>
+          <td class="n-val">40</td>
+          <td class="center">
+            <div class="decision-cell">
+              <span class="d-opt reject" id="q6B-r" onclick="pick('B','r')">REJECT</span>
+              <span class="d-opt failreject" id="q6B-f" onclick="pick('B','f')">FAIL-TO-REJECT</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="row-label">C.</td>
+          <td class="stat">z = &nbsp;1.10</td>
+          <td class="n-val">5,000</td>
+          <td class="center">
+            <div class="decision-cell">
+              <span class="d-opt reject" id="q6C-r" onclick="pick('C','r')">REJECT</span>
+              <span class="d-opt failreject" id="q6C-f" onclick="pick('C','f')">FAIL-TO-REJECT</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="row-label">D.</td>
+          <td class="stat">t = &nbsp;3.50</td>
+          <td class="n-val">25</td>
+          <td class="center">
+            <div class="decision-cell">
+              <span class="d-opt reject" id="q6D-r" onclick="pick('D','r')">REJECT</span>
+              <span class="d-opt failreject" id="q6D-f" onclick="pick('D','f')">FAIL-TO-REJECT</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="q6-note">
+      Hint: For z, the critical value is always ±1.96.
+      For t, the critical value depends on degrees of freedom (df = N − 1): df = 39 → t* ≈ 2.02 · df = 24 → t* ≈ 2.06.
+    </div>
+
+    <button class="q6-check-btn" onclick="checkQ6()">Check My Answers</button>
+    <div class="q6-score" id="q6score"></div>
+  </div>
+
+  <div class="footer">Soc 302: Statistics for Social Research · NYU · Practice Exam 3</div>
+</div><!-- /exam -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────────────────────────────────────
+function show(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'block';
+}
+
+function dnormStd(x) {
+  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+}
+function dnorm(x, mu, sigma) {
+  return dnormStd((x - mu) / sigma) / sigma;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Q3: Standard normal bell curve
+// ─────────────────────────────────────────────────────────────────────────────
+let q3revealed = false;
+
+function drawQ3(reveal) {
+  const canvas = document.getElementById('q3canvas');
+  const ctx    = canvas.getContext('2d');
+  const dpr    = window.devicePixelRatio || 1;
+  const rect   = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  const PAD = { top: 30, right: 22, bottom: 38, left: 36 };
+  const pW = W - PAD.left - PAD.right;
+  const pH = H - PAD.top  - PAD.bottom;
+  const XLO = -4, XHI = 4;
+  const xPx = v => PAD.left + ((v - XLO) / (XHI - XLO)) * pW;
+  const peak = dnormStd(0);
+  const yPx  = d => PAD.top + pH * (1 - (d / peak) * 0.84);
+  const baseY = yPx(0);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Rejection region fill (always shown)
+  function fillSeg(lo, hi, color) {
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(xPx(lo), baseY);
+    for (let i = 0; i <= 200; i++) {
+      const x = lo + (hi - lo) * i / 200;
+      ctx.lineTo(xPx(x), yPx(dnormStd(x)));
+    }
+    ctx.lineTo(xPx(hi), baseY); ctx.closePath();
+    ctx.fillStyle = color; ctx.fill(); ctx.restore();
+  }
+
+  if (reveal) {
+    fillSeg(-4, -1.96, 'rgba(192,57,43,0.15)');
+    fillSeg(1.96, 4,   'rgba(192,57,43,0.15)');
+    fillSeg(-1.96, 1.96, 'rgba(87,6,140,0.18)');
+  }
+
+  // Bell curve
+  ctx.save(); ctx.beginPath();
+  for (let i = 0; i <= 400; i++) {
+    const x = XLO + (XHI - XLO) * i / 400;
+    const px = xPx(x), py = yPx(dnormStd(x));
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 2.2; ctx.stroke(); ctx.restore();
+
+  // Baseline
+  ctx.save(); ctx.beginPath();
+  ctx.moveTo(PAD.left, baseY); ctx.lineTo(PAD.left + pW, baseY);
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+
+  if (reveal) {
+    // Critical value lines
+    [-1.96, 1.96].forEach(cv => {
+      const px = xPx(cv);
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(px, PAD.top); ctx.lineTo(px, baseY);
+      ctx.strokeStyle = '#57068c'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#57068c'; ctx.font = 'bold 11px -apple-system, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText((cv > 0 ? '+' : '') + cv.toFixed(2), px, PAD.top - 5);
+      ctx.restore();
+    });
+    // 95% label
+    ctx.save();
+    ctx.fillStyle = '#57068c'; ctx.font = 'bold 13px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('95%', xPx(0), PAD.top + 30);
+    ctx.fillStyle = 'rgba(192,57,43,0.6)'; ctx.font = '10px -apple-system, sans-serif';
+    ctx.fillText('2.5%', xPx(-3.2), PAD.top + 30);
+    ctx.fillText('2.5%', xPx(3.2), PAD.top + 30);
+    ctx.restore();
+  }
+
+  // X-axis ticks
+  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#888'; ctx.font = '11px -apple-system, sans-serif';
+  [-3, -2, -1, 0, 1, 2, 3].forEach(v => {
+    const px = xPx(v);
+    ctx.beginPath(); ctx.moveTo(px, baseY); ctx.lineTo(px, baseY + 4);
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+    ctx.fillText(v === 0 ? '0' : (v > 0 ? '+' : '') + v, px, baseY + 16);
+  });
+  ctx.fillStyle = '#bbb'; ctx.font = '10.5px -apple-system, sans-serif';
+  ctx.fillText('z-score (standard deviations from mean)', PAD.left + pW / 2, baseY + 30);
+  ctx.restore();
+}
+
+function revealQ3() {
+  q3revealed = true;
+  drawQ3(true);
+  show('a3');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Q4: Two non-overlapping bell curves
+// ─────────────────────────────────────────────────────────────────────────────
+function drawQ4() {
+  const canvas = document.getElementById('q4canvas');
+  const ctx    = canvas.getContext('2d');
+  const dpr    = window.devicePixelRatio || 1;
+  const rect   = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  const PAD = { top: 46, right: 24, bottom: 46, left: 40 };
+  const pW = W - PAD.left - PAD.right;
+  const pH = H - PAD.top  - PAD.bottom;
+  const XLO = 0, XHI = 4;
+
+  // Group parameters
+  const groups = [
+    { mu: 1.4, se: 0.10, fill: 'rgba(192,57,43,0.22)', stroke: '#c0392b', label: 'Rural', side: 'left' },
+    { mu: 2.9, se: 0.10, fill: 'rgba(41,128,185,0.28)', stroke: '#2980b9', label: 'Urban', side: 'right' },
+  ];
+
+  const peak   = dnorm(groups[0].mu, groups[0].mu, groups[0].se);
+  const YSCALE = 0.80;
+  const xPx = v => PAD.left + ((v - XLO) / (XHI - XLO)) * pW;
+  const yPx = d => PAD.top + pH * (1 - (d / peak) * YSCALE);
+  const baseY = yPx(0);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Fill curves
+  groups.forEach(({ mu, se, fill }) => {
+    ctx.save(); ctx.beginPath();
+    ctx.moveTo(xPx(XLO), baseY);
+    for (let i = 0; i <= 500; i++) {
+      const x = XLO + (XHI - XLO) * i / 500;
+      ctx.lineTo(xPx(x), yPx(dnorm(x, mu, se)));
+    }
+    ctx.lineTo(xPx(XHI), baseY); ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill(); ctx.restore();
+  });
+
+  // Stroke curves
+  groups.forEach(({ mu, se, stroke }) => {
+    ctx.save(); ctx.beginPath();
+    for (let i = 0; i <= 500; i++) {
+      const x = XLO + (XHI - XLO) * i / 500;
+      const px = xPx(x), py = yPx(dnorm(x, mu, se));
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = stroke; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+  });
+
+  // Baseline
+  ctx.save(); ctx.beginPath();
+  ctx.moveTo(PAD.left, baseY); ctx.lineTo(PAD.left + pW, baseY);
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+
+  // Mean lines + labels
+  groups.forEach(({ mu, se, stroke, label, side }) => {
+    const px = xPx(mu);
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(px, PAD.top); ctx.lineTo(px, baseY);
+    ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = stroke; ctx.font = 'bold 11.5px -apple-system, sans-serif';
+    ctx.textAlign = side === 'left' ? 'right' : 'left';
+    const lx = side === 'left' ? px - 6 : px + 6;
+    ctx.fillText(`${label}: x̄ = ${mu.toFixed(1)}`, lx, PAD.top - 6);
+    ctx.restore();
+
+    // 95% CI bracket
+    const loPx = xPx(mu - 1.96 * se), hiPx = xPx(mu + 1.96 * se);
+    const brY  = baseY + 7;
+    ctx.save();
+    ctx.strokeStyle = stroke; ctx.lineWidth = 2.2; ctx.globalAlpha = 0.75;
+    ctx.beginPath(); ctx.moveTo(loPx, brY); ctx.lineTo(hiPx, brY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(loPx, brY - 4); ctx.lineTo(loPx, brY + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(hiPx, brY - 4); ctx.lineTo(hiPx, brY + 4); ctx.stroke();
+    ctx.fillStyle = stroke; ctx.globalAlpha = 0.70;
+    ctx.font = '9.5px -apple-system, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('95% CI', (loPx + hiPx) / 2, brY - 6);
+    ctx.restore();
+  });
+
+  // X-axis
+  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = '#888'; ctx.font = '11px -apple-system, sans-serif';
+  [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4].forEach(v => {
+    const px = xPx(v);
+    ctx.beginPath(); ctx.moveTo(px, baseY); ctx.lineTo(px, baseY + 4);
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.stroke();
+    if (v % 1 === 0) {
+      ctx.fillStyle = '#666'; ctx.font = 'bold 11px -apple-system, sans-serif';
+      ctx.fillText(v.toFixed(0), px, baseY + 16);
+    }
+  });
+  ctx.fillStyle = '#aaa'; ctx.font = '10.5px -apple-system, sans-serif';
+  ctx.fillText('Political attitude score  (0 = very conservative  ·  4 = very liberal)',
+    PAD.left + pW / 2, baseY + 32);
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Q6: Interactive decision table
+// ─────────────────────────────────────────────────────────────────────────────
+// Correct answers: A→reject, B→fail, C→fail, D→reject
+const Q6_CORRECT = { A: 'r', B: 'f', C: 'f', D: 'r' };
+const Q6_PICKS   = { A: null, B: null, C: null, D: null };
+
+function pick(row, choice) {
+  Q6_PICKS[row] = choice;
+  ['r', 'f'].forEach(c => {
+    const el = document.getElementById(`q6${row}-${c}`);
+    el.classList.remove('selected', 'correct', 'incorrect', 'show-correct');
+  });
+  document.getElementById(`q6${row}-${choice}`).classList.add('selected');
+}
+
+function checkQ6() {
+  let correct = 0;
+  let total   = 0;
+  const rows  = ['A', 'B', 'C', 'D'];
+  rows.forEach(row => {
+    const ans = Q6_CORRECT[row];
+    const got = Q6_PICKS[row];
+    total++;
+    if (got === null) {
+      // No pick — show correct
+      document.getElementById(`q6${row}-${ans}`).classList.add('show-correct');
+    } else if (got === ans) {
+      document.getElementById(`q6${row}-${got}`).classList.add('correct');
+      correct++;
+    } else {
+      document.getElementById(`q6${row}-${got}`).classList.add('incorrect');
+      document.getElementById(`q6${row}-${ans}`).classList.add('show-correct');
+    }
+  });
+  const scoreEl = document.getElementById('q6score');
+  scoreEl.style.display = 'block';
+  const pct = Math.round(correct / total * 100);
+  scoreEl.innerHTML = `Score: <strong>${correct} / ${total}</strong> correct (${pct}%).
+    ${correct === total ? '🎉 Perfect!' : 'Review the highlighted answers above.'}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Init & resize
+// ─────────────────────────────────────────────────────────────────────────────
+function initCanvases() {
+  drawQ3(q3revealed);
+  drawQ4();
+}
+
+window.addEventListener('resize', initCanvases);
+window.addEventListener('load',   initCanvases);
+</script>
+</body>
+</html>
